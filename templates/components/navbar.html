@@ -142,7 +142,7 @@
                         <li style="height: 85px;" class="${i !== 0 ? 'mt-3' : ''}">
                             <div class="message-notification p-3 d-flex flex-row noti_from_${message.user.id}" style="cursor: pointer;">
                                 <div d-flex flex-column>
-                                    <img src="${message.user.profile_image}" style="height: 35px;" class="me-2" alt="${message.user.username}'s profile image" />
+                                    <img src="${message.user.profile_image}" style="height: 35px; border-radius: 50%;" class="me-2" alt="${message.user.username}'s profile image" />
                                     <p>@${message.user.username}</p>
                                 </div>
 
@@ -214,7 +214,7 @@
                     document.getElementById('id_notifications-dropdown').innerHTML += `
                         <li style="height: 85px;" class="${i !== 0 ? 'mt-3' : ''}">
                             <div class="notification p-3 d-flex flex-row notification_from_${noti.sender.id} type_${noti.type} post_${noti.post_id !== null && noti.post_id}" style="cursor: pointer;">
-                                <img src="${noti.sender.profile_image}" style="height: 35px;" class="me-2" alt="${noti.sender.username}'s profile image" />
+                                <img src="${noti.sender.profile_image}" style="height: 35px; border-radius: 50%;" class="me-2" alt="${noti.sender.username}'s profile image" />
 
                                 <div d-flex flex-column>
                                     <p>@${noti.sender.username} ${notificationTitleByType[noti.type]} 
