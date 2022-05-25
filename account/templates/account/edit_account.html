@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/edit-account.css">
+
+<br><br><br><br><br>
+
+<div class="container-fluid d-flex justify-content-center">
+	<div class="row justify-content-center">
+		<div class="card profile-card">
+		  <div class="card-body">
+		  	<div class="d-flex flex-column justify-content-center p-4">
+		  		<div class="mb-2" id="id_image_crop_confirm">
+		  			<span id="id_cancel" class="material-icons">cancel</span>
+		  			<span id="id_confirm" class="material-icons">check</span>
+		  		</div>
+		  		<div class="image-container" id="id_image_container">
+	  				<img class="border border-dark rounded-circle img-fluid mx-auto profile-image" id="id_profile_image_display" src="{{form.initial.profile_image.url}}" alt="joffgram logo">
+					<div class="middle" id="id_middle_container">
+						<div class="text" id="id_text">Edit</div>
+					</div>
+		  		</div>
+		  		<form class="form-signin" method="post" enctype="multipart/form-data">{% csrf_token %}
+
+		  			<input class="d-none" type="file" id="id_profile_image" name="profile_image" onchange="readURL(this)">
+			  		
+					<h6 class="mt-4 field-heading">Email</h6>
+			  		<input type="email" name="email" id="id_input_email" class="form-control" placeholder="Enter your email address." required autofocus value={{form.initial.email}}>
+			  		
+					<h6 class="mt-4 field-heading">Username</h6>
+			  		<input type="text" name="username" id="id_input_username" class="form-control" placeholder="Enter your username." required
+					value="{{form.initial.username}}">
+
+					<h6 class="mt-4 field-heading">Full name</h6>
+			  		<input type="text" name="fullname" id="id_input_fullname" class="form-control" placeholder="e.g. John Doe" value="{{form.initial.fullname}}">
+
+					<h6 class="mt-4 field-heading">BIO</h6>
+			  		<input type="text" name="bio" id="id_input_bio" class="form-control" placeholder="e.g. I love cats!" value="{{form.initial.bio}}">
+					
+					<div class="mt-4 checkbox">
+						<label>
+							<input type="checkbox" name="hide_email" id="id_input_hide_email" {% if form.initial.hide_email %}checked{%endif%}>
+							Hide Email
+						</label>
+			  			<br>
+						<label>
+							<input type="checkbox" name="is_private" id="id_input_is_private" {% if form.initial.is_private %}checked{%endif%}>
+							Private Profile
+						</label>
+					</div>
+
+					{% for field in form %}
+						<p>
+							{% for error in field.errors %}
+								<p style="color: red">{{ error }}</p>
+							{% endfor %}
+						</p>
+					{% endfor %}
+
+					{% if form.non_field_errors %}
+						<div style="color: red">
+							<p>{{form.non_field_errors}}</p>
+						</div>
+					{% endif %}
+
+					<div class="d-flex flex-column mt-4">
+						<button class="mt-4 btn btn-primary flex-grow-1" id="id_save_profile_changes">Save</button>
+					</div>
+				</form>
+
+				<a href="{% url 'accounts:change_password' %}">change password</a>
+		  	</div>
+		  </div>
+		</div>
+	</div>
+</div><br>
+
+<script type="text/javascript">
+	let cropper;
+	let imageFile;
+	let base64ImageString;
+	let cropX;
+	let cropY;
+	let cropWidth;
+	let cropHeight;
+
+	enableImageOverlay()
+
+	function readURL(input){
+		if (input.files && input.files[0]) {
+			const reader = new FileReader
+			reader.onload = e => {
+				disableImageOverlay()
+				const image = e.target.result
+				const imageField = document.getElementById('id_profile_image_display')
+				imageField.src = image
+				cropper = new Cropper(imageField, {
+					aspectRatio: 1/1,
+					crop(e) {
+						setImageCropProperties(image, e.detail.x, e.detail.y, e.detail.width, e.detail.height)
+					}
+				})
+			}
+			reader.readAsDataURL(input.files[0])
+		}
+	}
+
+	function setImageCropProperties(image, x, y, width, height) {
+		imageFile = image
+		cropX = x
+		cropY = y
+		cropWidth = width
+		cropHeight = height
+	}
+
+	function isImageSizeValid(image) {
+		const startIndex = image.indexOf('base64,') + 7
+		const base64str = image.substr(startIndex)
+		const decoded = atob(base64str)
+
+		if (decoded.length >= '{{DATA_UPLOAD_MAX_MEMORY_SIZE}}'){
+			return null
+		}
+		return base64str
+	}
+
+	function cropImage(image, x, y, width, height) {
+		base64ImageString = isImageSizeValid(image)
+
+		if (base64ImageString != null) {
+			const requestData = {
+				'csrfmiddlewaretoken': '{{csrf_token}}',
+				'image': base64ImageString,
+				'cropX': cropX,
+				'cropY': cropY,
+				'cropWidth': cropWidth,
+				'cropHeight': cropHeight
+			}
+			displayLoadingSpinner(true)
+			$.ajax({ 
+				type: 'POST',
+				dataType: 'json',
+				url: "{% url 'accounts:crop_profile_image' user_id=form.initial.id %}",
+				data: requestData,
+				timeout: 10000,
+				success: data => {
+					if (data.result == 'success') {
+						
+					} else if (data.result == 'error') {
+						alert(data.exception)
+						window.location.reload()
+					}
+				},
+				error: data => {
+					console.error('ERROR...', data)
+				},
+				complete: data => {
+					displayLoadingSpinner(false)
+					$.ajax({ 
+							type: 'POST',
+							dataType: 'json',
+							url: "{% url 'accounts:edit' user_id=form.initial.id %}",
+							data: {
+								'csrfmiddlewaretoken': '{{csrf_token}}',
+								'username': document.getElementById('id_input_username').value,
+								'email': document.getElementById('id_input_email').value,
+								'bio': document.getElementById('id_input_bio').value,
+								'fullname': document.getElementById('id_input_fullname').value,
+								'hide_email': document.getElementById('id_input_is_private').value,
+								'is_private': document.getElementById('id_input_hide_email').value,
+							},
+							timeout: 7500,
+							success: data => {
+								window.location.reload()
+							},
+							error: data => {
+								console.error('ERROR...', data)
+							},
+							complete: data => {
+								window.location.reload()
+							}
+						
+						})
+				},
+			})
+
+		} else {
+			alert('Upload an image smaller than 10MB!')
+			window.location.reload()
+		}
+
+	}
+
+	function enableImageOverlay() {
+		const text = document.getElementById('id_text')
+		text.style.backgroundColor = '#0066ff'
+		text.style.color = 'white'
+		text.style.fontSize = '16px'
+		text.style.padding = '16px 32px'
+		text.style.cursor = 'pointer'
+
+		const profileImage = document.getElementById('id_profile_image')
+		profileImage.style.opacity = 1
+		profileImage.style.display = 'block'
+		profileImage.style.width = '100%'
+		profileImage.style.height = 'auto'
+		profileImage.style.transition = '.5s ease'
+		profileImage.style.backfaceVisibility = 'hidden'
+		profileImage.style.cursor = 'pointer'
+
+		const middleContainer = document.getElementById('id_middle_container')
+		middleContainer.style.opacity = '0'
+		middleContainer.style.position = 'absolute'
+		middleContainer.style.top = '50%'
+		middleContainer.style.left = '50%'
+		middleContainer.style.transform = 'translate(-50%, -50%)'
+
+		const imageContainer = document.getElementById('id_image_container')
+		imageContainer.addEventListener('mouseover', e => {
+			profileImage.style.opacity = '0.3'
+			middleContainer.style.opacity = '1'
+		})
+		imageContainer.addEventListener('mouseout', e => {
+			profileImage.style.opacity = '1'
+			middleContainer.style.opacity = '0'
+		})
+		imageContainer.addEventListener('click', e => {
+			document.getElementById('id_profile_image').click()
+		})
+
+		const cropConfirm = document.getElementById('id_image_crop_confirm')
+		cropConfirm.classList.remove('d-flex')
+		cropConfirm.classList.remove('flex-row')
+		cropConfirm.classList.remove('justfiy-content-between')
+		cropConfirm.classList.add('d-none')
+	}
+
+	function disableImageOverlay(){
+		const profileImage = document.getElementById('id_profile_image_display')
+		const middleContainer = document.getElementById('id_middle_container')
+		const imageContainer = document.getElementById('id_image_container')
+		const text = document.getElementById('id_text')
+
+		profileImage.style.opacity = '1'
+		middleContainer.style.opacity = '0'
+		text.style.cursor = 'default'
+		text.style.opacity = '0'
+		
+		imageContainer.removeEventListener('click', e => {
+			e.preventDefault();
+		})
+
+		document.getElementById('id_image_container').removeEventListener("click", e => {
+			e.preventDefault();
+		});
+		document.getElementById('id_profile_image').addEventListener('click', e => {
+			e.preventDefault()
+		})
+
+		const cropConfirm = document.getElementById('id_image_crop_confirm')
+		cropConfirm.classList.add('d-flex')
+		cropConfirm.classList.add('flex-row')
+		cropConfirm.classList.add('justfiy-content-between')
+		cropConfirm.classList.remove('d-none')
+
+		const confirm = document.getElementById('id_confirm')
+		confirm.addEventListener('click', e => {
+			cropImage(imageFile, cropX, cropY, cropWidth, cropHeight)
+		})
+
+		const saveBtn = document.getElementById('id_save_profile_changes')
+		saveBtn.addEventListener('click', e => {
+			e.preventDefault()
+			cropImage(imageFile, cropX, cropY, cropWidth, cropHeight)
+		})
+
+
+
+		const cancel = document.getElementById('id_cancel')
+		cancel.addEventListener('click', e => {
+			window.location.reload()
+		})
+
+	}
+</script>
+{% endblock content %}

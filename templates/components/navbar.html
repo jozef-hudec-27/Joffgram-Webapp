@@ -1,0 +1,269 @@
+{% load static %}
+<div class="d-flex p-3 px-md-4 mb-4 bg-white border-bottom shadow-sm">
+    <div class="d-md-flex flex-row my-auto flex-grow-1 align-items-center">
+        <!-- col 1 -->
+        <h5 class="mr-3 font-weight-normal justify-content-start">
+            <a class="p-2 text-dark" href="/" style="font-family: 'Updock', cursive; font-size: 40px; margin-left: 10rem;">Joffgram</a>
+        </h5>
+
+        <!-- col 2 -->
+        <form action="" class="search-bar justify-content-start" style="margin-left: 10rem;" id="id_form_large">
+            <input type="text" class="form-control" name="q" id="id_q_large" placeholder="Search..." size="30">
+        </form>
+
+        <!-- col 3 -->
+        <div class="d-flex flex-row-reverse flex-grow-1">
+            <nav class="mx-4">
+                <div class="d-flex flex-row">
+
+                    <!-- home COL1 -->
+                    <div style="margin-right: 1rem; cursor: pointer;">
+                        <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_home_navbar_button">
+                            <span class="material-icons">home</span>
+                        </div>
+                    </div>
+
+                    <!-- unread messages COL2 -->
+                    <div class="dropdown">
+                        <div style="margin-right: 1rem; cursor: pointer;" data-bs-toggle="dropdown" id="id_unread_messages_navbar_button">
+                            <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_chat_navbar_logo">
+                                <span class="material-symbols-outlined">chat</span>
+                            </div>
+                        </div>
+
+                        <div style="overflow-y: scroll; width: 400px; height: 300px;" class="dropdown-menu" aria-labelledby="dropdownMenuButton1" id="id_message-list-dropdown">
+
+                        </div>
+                    </div>
+
+                    <!-- notifications COL3 -->
+                    <div class="dropdown">
+                        <div style="margin-right: 1rem; cursor: pointer;" data-bs-toggle="dropdown" id="id_notifications_navbar_button">
+                            <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_notifications_navbar_logo">
+                                <span class="material-symbols-outlined">notifications</span>
+                            </div>
+                        </div>
+
+                        <div style="overflow-y: scroll; width: 400px; height: 300px;" class="dropdown-menu" aria-labelledby="dropdownMenuButton1" id="id_notifications-dropdown">
+
+                        </div>
+                    </div>
+
+                    <!-- explore COL4 -->
+                    <a href="{% url 'post:explore_view' %}" style="color: black;">
+                        <div style="margin-right: 1rem; cursor: pointer;">
+                            <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_explore_navbar_button">
+                                <span class="material-icons">explore</span>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- profile COL5 -->
+                    <a href="/accounts/{{request.user.id}}">
+                        <div style="margin-right: 1rem; cursor: pointer;">
+                            <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_profile_navbar_button">
+                                <img src="{{request.user.profile_image.url}}" height='25' width='25' alt="PFP" style="border-radius: 50%;">
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- logout COL6 -->
+                    <div style="margin-right: 1rem; cursor: pointer;">
+                        <div class="d-flex notifications-icon-container rounded-circle align-items-center mr-3" id="id_logout_navbar_button">
+                            <span class="material-icons">logout</span>
+                        </div>
+                    </div>
+
+                </div>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    const  timeSince = (date, short=false) => {
+        var seconds = Math.floor((new Date() - date) / 1000);
+        var interval = seconds / 31536000;
+
+        if (interval > 1) {
+            return Math.floor(interval) + " YEARS".substring(0, short ? 2 : 6);
+        }
+        interval = seconds / 2592000;
+        if (interval > 1) {
+            return Math.floor(interval) + " MONTHS".substring(0, short ? 3 : 7);
+        }
+        interval = seconds / 86400;
+        if (interval > 1) {
+            return Math.floor(interval) + " DAYS".substring(0, short ? 2 : 5);
+        }
+        interval = seconds / 3600;
+        if (interval > 1) {
+            return Math.floor(interval) + " HOURS".substring(0, short ? 2 : 6);
+        }
+        interval = seconds / 60;
+        if (interval > 1) {
+            return Math.floor(interval) + " MINUTES".substring(0, short ? 4 : 9);
+        }
+        return Math.floor(seconds) + " SECONDS".substring(0, short ? 2 : 8);
+    }
+
+    document.getElementById('id_logout_navbar_button').onclick = e => {
+        e.preventDefault()
+        window.location.href = '/logout'
+    }
+
+    document.getElementById('id_home_navbar_button').onclick = e => {
+        e.preventDefault()
+        window.location.href = '/'
+    }
+
+    document.getElementById('id_form_large').onsubmit = e => {
+        e.preventDefault()
+        const searchBar = document.getElementById('id_q_large')
+        const searchQuery = searchBar.value
+        window.location.href = '/accounts/search?q=' + searchQuery
+    }
+
+
+
+    fetch("{% url 'api_accounts:get_my_unread_messages' %}")
+        .then(response => {
+            return response.json()
+        })
+        .then(data => {
+            Window.unreadMessages = data
+            if (data.length === 0) {
+                document.getElementById('id_message-list-dropdown').innerHTML = '<p align="center" style="color: grey;">No new messages...</p>'
+            } else {
+                document.getElementById('id_chat_navbar_logo').style.color = 'red'
+                for (let i = 0; i < data.length; i++) {
+                    let message = data[i]
+                    document.getElementById('id_message-list-dropdown').innerHTML += `
+                        <li style="height: 85px;" class="${i !== 0 ? 'mt-3' : ''}">
+                            <div class="message-notification p-3 d-flex flex-row noti_from_${message.user.id}" style="cursor: pointer;">
+                                <div d-flex flex-column>
+                                    <img src="${message.user.profile_image}" style="height: 35px;" class="me-2" alt="${message.user.username}'s profile image" />
+                                    <p>@${message.user.username}</p>
+                                </div>
+
+                                <div d-flex flex-column>
+                                    <p>${message.body || '<i>User sent a file.</i>'}</p>
+                                    <sup>${timeSince(new Date(message.created_at), true)}</sup>
+                                </div>
+                            </div>
+                        </li>
+                    `
+            }
+            }
+
+        })
+
+    const unreadMessagesBtn = document.getElementById('id_unread_messages_navbar_button')
+    unreadMessagesBtn.onclick = () => {
+        if (Window.unreadMessages !== undefined && Window.unreadMessages.length > 0) {
+            fetch("{% url 'api_accounts:read_my_unread_messages' %}")
+                .then(data => data.json())
+                .then(_ => document.getElementById('id_chat_navbar_logo').style.color = '')
+                .catch(err => console.log(err))
+        }
+    }
+
+
+    setTimeout(() => {
+        const messageNotifications = document.querySelectorAll('div.message-notification')
+        messageNotifications.forEach(notification => {
+            let senderId = notification.classList[4].split('_')[2]
+            notification.onclick = () => {
+                window.location.href = '/chat/' + senderId
+            }
+
+            notification.addEventListener('mouseover', () => {
+                notification.style['border'] = '1px solid grey'
+            })
+
+            notification.addEventListener('mouseout', () => {
+                notification.style['border'] = ''
+            })
+        })
+    }, 2000)
+
+
+
+    const notificationTitleByType = {
+        'comment_on_post': 'commented your post.',
+        'comment_on_story': 'commented your story.',
+        'like_on_post': 'liked your post.',
+        'follow_request_sent': 'sent you a follow request.',
+        'new_follower': 'started following you.',
+        'response_on_comment': 'responded to your comment.',
+        'follow_request_accepted': 'accepted your follow request.'
+    }
+    fetch("{% url 'api_accounts:get_all_my_notifications' %}")
+        .then(response => {
+            return response.json()
+        })
+        .then(data => {
+            Window.notifications = data
+            if (data.length === 0) {
+                document.getElementById('id_notifications-dropdown').innerHTML = '<p align="center" style="color: grey;">No new notifications...</p>'
+            } else {
+                document.getElementById('id_notifications_navbar_logo').style.color = 'red'
+                for (let i = 0; i < data.length; i++) {
+                    let noti = data[i]
+
+                    document.getElementById('id_notifications-dropdown').innerHTML += `
+                        <li style="height: 85px;" class="${i !== 0 ? 'mt-3' : ''}">
+                            <div class="notification p-3 d-flex flex-row notification_from_${noti.sender.id} type_${noti.type} post_${noti.post_id !== null && noti.post_id}" style="cursor: pointer;">
+                                <img src="${noti.sender.profile_image}" style="height: 35px;" class="me-2" alt="${noti.sender.username}'s profile image" />
+
+                                <div d-flex flex-column>
+                                    <p>@${noti.sender.username} ${notificationTitleByType[noti.type]} 
+                                        <i>
+                                            ${noti.comment_body !== null ? '- „' + noti.comment_body.substring(0, 30) + '“' : noti.reply_body !== null ? '- „' + noti.reply_body.substring(0, 30) + '“' : noti.story_comment_body !== null ? '- „' + noti.story_comment_body + '“' : ''}
+                                        </i>
+                                    </p>
+                                    <sup>${timeSince(new Date(noti.created_at), true)}</sup>
+                                </div>
+                            </div>
+                        </li>
+                    `
+            }
+            }
+        })
+
+    const notificationsBtn = document.getElementById('id_notifications_navbar_button')
+    notificationsBtn.onclick = () => {
+        if (Window.notifications !== undefined && Window.notifications.length > 0) {
+            fetch("{% url 'api_accounts:check_my_notifications' %}")
+                .then(data => data.json())
+                .then(_ => document.getElementById('id_notifications_navbar_logo').style.color = '')
+                .catch(err => console.log(err))
+        }
+    }
+
+    setTimeout(() => {
+        const notifications = document.querySelectorAll('div.notification')
+        notifications.forEach(notification => {
+            let senderId = notification.classList[4].split('_')[2]
+            let notiType = notification.classList[5]
+            if (['type_follow_request_sent', 'type_new_follower', 'type_follow_request_accepted', 'type_comment_on_story'].includes(notiType)) {
+                notification.onclick = () => {
+                window.location.href = '/accounts/' + senderId
+                }
+            } else { 
+                let postId = notification.classList[6].split('_')[1]
+                notification.onclick = () => {
+                window.location.href = '/posts/' + postId
+                }
+            }
+
+            notification.addEventListener('mouseover', () => {
+                notification.style['border'] = '1px solid grey'
+            })
+
+            notification.addEventListener('mouseout', () => {
+                notification.style['border'] = ''
+            })
+        })
+    }, 2000)
+</script>

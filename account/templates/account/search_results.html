@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/search-results.css">
+
+<br><br><br><br><br>
+
+<div class="container">
+	<div class="card p-2">
+		{% if accounts %}
+			<div class="d-flex flex-row flex-wrap">
+			{% for account in accounts %}
+				<div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center">
+					<a class="profile-link" href="">
+						<div class="card-image m-2">
+							<img class="img-fluid profile-image" src="{{account.0.profile_image.url}}" alt="{{account.0.username}}'s profile image">
+						</div>
+					</a>
+					<a class="profile-link" href="">
+						<div class="card-center px-2">
+							<h4 class="card-title">
+								<a href="{% url 'accounts:acc_detail' user_id=account.0.id %}" style="color: black;">{{account.0.username}}</a>
+							</h4>
+							{% if account.1 and account.4 %}
+								<p class="card-text"><a href="{% url 'chat:private_chat_view' their_id=account.0.id %}">Send a Message</a></p>
+							{% endif %}
+							
+						</div>
+					</a>
+					<div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-2" id="id_relation_btn_{{account.0.id}}">
+						{% if account.0 == request.user %}
+							<div class="d-flex flex-row friends-text-container p-3">
+								<p class="friends-text m-auto">
+									This is you 
+								</p>
+								<span class="material-icons m-auto pl-2">
+								person_pin
+								</span>
+							</div>
+						{% else%}
+							{% if account.3 %} <!--IF THEY SENT US A FOLLOW REQUEST -->
+								<p style="margin-right: 5px;">{{account.0.username}} wants to follow you</p>
+								<div class="d-flex flex-row friends-text-container p-3">
+									<div class="btn-group" role="group" aria-label="Basic example">
+										<button class="btn btn-success" id="id_follow_button" onClick="acceptRequest('{{account.0.id}}', '{{account.1}}')">Accept</button>
+										<button class="btn btn-danger" id="id_follow_button" onClick="declineRequest('{{account.0.id}}', '{{account.1}}')">Decline</button>
+									</div>
+								</div>
+							{% elif account.2 %} <!--IF WE SENT THEM A FOLLOW REQUEST -->
+							<div class="d-flex flex-row friends-text-container p-3">
+								<button class="btn btn-primary" id="id_follow_button" onClick="cancelRequest('{{account.0.id}}', '{{account.4}}')">Cancel Request</button>
+							</div>
+							{% else %} <!--IF THERE ARE NO REQUESTS -->
+								{% if account.1 %} <!--IF WE ALREADY FOLLOW THEM -->
+									<div class="d-flex flex-row friends-text-container p-3">
+										<p class="friends-text m-auto">
+											Following 
+										</p>
+										<span class="material-icons checkmark-icon m-auto pl-2">
+										check_circle_outline
+										</span>
+									</div>
+								{% else %} <!--IF WE DONT FOLLOW THEM -->
+									<div class="d-flex flex-row friends-text-container p-3">
+										<button class="btn btn-primary" id="id_follow_button" onClick="followUser('{{account.0.id}}', '{{account.4}}')">
+											{% if account.4 %}Follow Back{% else %}Follow{% endif %}
+										</button>
+									</div>
+								{% endif %}
+							{%  endif %}
+						{% endif %}
+					</div>
+				</div>
+
+				{% if forloop.counter|divisibleby:2 %}
+					</div><div class="d-flex flex-row flex-wrap">
+				{% endif %}
+			
+			{% endfor %}
+			
+		{% else %} <!-- If no friends -->
+			<div class="d-flex flex-row flex-grow-1 justify-content-center align-items-center p-4">
+				<p>No results</p>
+			</div>
+		{% endif %}
+		</div>
+	</div>
+	
+</div>
+
+<script>
+	const mainDomain = 'http://127.0.0.1:8000'
+
+	function getCookie(name) {
+		let cookieValue = null;
+		if (document.cookie && document.cookie !== '') {
+			const cookies = document.cookie.split(';');
+			for (let i = 0; i < cookies.length; i++) {
+				const cookie = cookies[i].trim();
+				if (cookie.substring(0, name.length + 1) === (name + '=')) {
+					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+					break;
+				}
+			}
+		}
+		return cookieValue;
+	}
+	const csrftoken = getCookie('csrftoken');
+
+	const followUser = (userId, theyFollowUs) => {
+		fetch(`${mainDomain}/api/follows/send-follow-request/`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({ receiver_id: userId })
+		})
+			.then(res => res.json())
+			.then(data => {
+				const relationBtn = document.getElementById('id_relation_btn_' + userId)
+				const isPrivate = data.is_active
+				if (isPrivate == false) {
+					relationBtn.innerHTML = `
+						<div class="d-flex flex-row friends-text-container p-3">
+							<p class="friends-text m-auto">
+								Following 
+							</p>
+							<span class="material-icons checkmark-icon m-auto pl-2">
+								check_circle_outline
+							</span>
+						</div>
+					`
+				} else {
+					relationBtn.innerHTML = `
+						<div class="d-flex flex-row friends-text-container p-3">
+							<button class="btn btn-primary" id="id_follow_button" onClick="cancelRequest('${userId}', '${theyFollowUs}')">Cancel Request</button>
+						</div>
+					`
+				}
+			})
+			.catch(err => console.log(err))
+	}
+
+	const cancelRequest = (userId, theyFollowUs) => {
+		fetch(`${mainDomain}/api/follows/cancel-follow-request/`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({ receiver_id: userId })
+		})
+			.then(res => res.json())
+			.then(data => {
+				const relationBtn = document.getElementById('id_relation_btn_' + userId)
+				relationBtn.innerHTML = `
+					<div class="d-flex flex-row friends-text-container p-3">
+						<button class="btn btn-primary" id="id_follow_button" onClick="followUser('${userId}', '${theyFollowUs}')">
+							${theyFollowUs == 'True' ? 'Follow Back' : 'Follow'}
+						</button>
+					</div>
+				`
+			})
+			.catch(err => console.log(err))
+	}
+
+	const acceptRequest = (userId, weFollowThem) => {
+		fetch(`${mainDomain}/api/follows/accept-or-decline-follow-request/`, {
+			method: 'POST',
+			headers: {
+				'action': 'accept',
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({ sender_id: userId, action: 'accept' })
+		})
+			.then(res => res.json())
+			.then(data => {
+				const relationBtn = document.getElementById('id_relation_btn_' + userId)
+				relationBtn.innerHTML = weFollowThem == 'True' ? `
+					<div class="d-flex flex-row friends-text-container p-3">
+						<p class="friends-text m-auto">
+							Following 
+						</p>
+						<span class="material-icons checkmark-icon m-auto pl-2">
+							check_circle_outline
+						</span>
+					</div>
+				` : `
+					<div class="d-flex flex-row friends-text-container p-3">
+						<button class="btn btn-primary" id="id_follow_button" onClick="followUser('${userId}', 'True')">
+							Follow Back
+						</button>
+					</div>
+				`
+			})
+			.catch(err => console.log(err))
+	}
+
+	const declineRequest = (userId, weFollowThem) => {
+		fetch(`${mainDomain}/api/follows/accept-or-decline-follow-request/`, {
+			method: 'POST',
+			headers: {
+				'action': 'decline',
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({ sender_id: userId, action: 'decline' })
+		})
+			.then(res => res.json())
+			.then(data => {
+				const relationBtn = document.getElementById('id_relation_btn_' + userId)
+				relationBtn.innerHTML = weFollowThem == 'True' ? `
+					<div class="d-flex flex-row friends-text-container p-3">
+						<p class="friends-text m-auto">
+							Following 
+						</p>
+						<span class="material-icons checkmark-icon m-auto pl-2">
+							check_circle_outline
+						</span>
+					</div>
+				` : `
+					<div class="d-flex flex-row friends-text-container p-3">
+						<button class="btn btn-primary" id="id_follow_button" onClick="followUser('${userId}', 'False')">
+							Follow
+						</button>
+					</div>
+				`
+			})
+			.catch(err => console.log(err))
+	}
+</script>
+{% endblock content %}

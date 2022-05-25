@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<br><br><br><br><br>
+
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="card card-signin">
+		  <div class="card-body">
+		    <form class="form-signin" method="post">{% csrf_token %}
+				<div class="d-flex flex-column pb-3">
+				<img class="img-fluid mx-auto d-block" src="{% static 'joffgram_logo.png' %}" alt="joffgram logo" width="72" height="72" style="border-radius: 50%;">
+				</div>
+				
+                <div align="center">
+                    {{form.old_password}}<br />
+                    {{form.new_password1}}<br />
+                    {{form.new_password2}}
+                </div>
+
+				{% for field in form %}
+					<p>
+						{% for error in field.errors %}
+							<p style="color: red">{{ error }}</p>
+						{% endfor %}
+					</p>
+				{% endfor %}
+
+				{% if form.non_field_errors %}
+					<div style="color: red">
+						<p>{{form.non_field_errors}}</p>
+					</div>
+				{% endif %}
+
+				<button class="btn btn-lg btn-primary btn-block mt-3" style="width: 100%;" type="submit">Change password</button>
+				</form>
+		  </div>
+		</div>
+	</div>
+</div>
+
+<script>
+	const oldPasswordField = document.getElementById('id_old_password')
+	const newPasswordField1 = document.getElementById('id_new_password1')
+	const newPasswordField2 = document.getElementById('id_new_password2')
+
+	oldPasswordField.placeholder = 'Old password'
+	newPasswordField1.placeholder = 'New password'
+	newPasswordField2.placeholder = 'Repeat new password'
+</script>
+{% endblock content %}

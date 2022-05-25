@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+	<br><br><br><br><br>
+
+	<link rel="stylesheet" href="{% static 'css/account.css' %}">
+
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="card card-signin">
+			<div class="card-body">
+				<h1>Password change complete</h1>
+				<p>Your password has been changed. You may continue using the app.</p>
+				<a href="{% url 'home' %}">Home</a>
+			</div>
+			</div>
+		</div>
+	</div>
+{% endblock content %}

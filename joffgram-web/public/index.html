@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- CROPPER JS CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/2.0.0-alpha.2/cropper.min.css" integrity="sha512-6QxSiaKfNSQmmqwqpTNyhHErr+Bbm8u8HHSiinMEz0uimy9nu7lc/2NaXJiUJj2y4BApd5vgDjSHyLzC8nP6Ng==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <title>Joffgram</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <div class='d-none' id="home-page" data-user-id="1" data-username="*YOUR FIRST USER'S USERNAME*"></div>
+    <div class='d-none' id="acc-detail" data-user-id="1"></div>
+    <div class="d-none" id="post-detail" data-user-id="1"></div>
+    <div class="d-none" id="private-chat" data-user-id="1" data-username="*YOUR FIRST USER'S USERNAME*"></div>
+    <div class="d-none" id="explore-page" data-user-id="1"></div>
+
+    <script>
+
+
+      function currentDiv(divId) {
+        const allIds = ['home-page', 'acc-detail', 'post-detail', 'private-chat', "explore-page"]
+        for (let id of allIds) {
+          document.getElementById(id).className = id == divId ? '' : 'd-none'
+        }
+      }
+
+
+      const path = window.location.pathname
+
+      if (path === '/') {
+        currentDiv('home-page')
+
+      } else if (path.startsWith('/accounts')) {
+       currentDiv('acc-detail')
+       document.getElementById('acc-detail').dataset.path = path
+
+      } else if (path.startsWith('/posts')) {
+        currentDiv('post-detail')
+        document.getElementById('post-detail').dataset.path = path + window.location.search
+      } else if (path.startsWith('/chat')) {
+        currentDiv('private-chat')
+        document.getElementById('private-chat').dataset.path = path 
+      }  else if (path === '/explore') {
+        currentDiv('explore-page')
+      }
+    </script>
+
+    <!-- CROPPER JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/2.0.0-alpha.2/cropper.min.js" integrity="sha512-IlZV3863HqEgMeFLVllRjbNOoh8uVj0kgx0aYxgt4rdBABTZCl/h5MfshHD9BrnVs6Rs9yNN7kUQpzhcLkNmHw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  </body>
+</html>
