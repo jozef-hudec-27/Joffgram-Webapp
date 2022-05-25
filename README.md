@@ -12,7 +12,7 @@
     => `pip install -r requirements.txt`
 
 ### 3. CONNECT TO POSTGRES DATABASE
-    For more info: [https://www.postgresql.org/docs/](https://www.postgresql.org/docs/)
+    For more info: https://www.postgresql.org/docs/
 
 ### 4. COMMIT DB CHANGES
     => `py .\manage.py migrate`
